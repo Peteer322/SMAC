@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+     <!-- Define los caracteres la vista desde dispositivos moviles, titulo 
+      de la pagina en el navegador y los estilos de bootstrap-->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 SMAC WEB</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/style.css" rel="stylesheet">
+    <style>
+         /* Estilos y caracteristicas para la página */
+        #header {
+            background-color: #f8f9fa;
+            height: 60px;
+            width: 100%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            
+        }
+        /* caracteristicas del encabezado */
+        .header-title {
+            color: #000000;
+            margin: 0;
+            font-size: 45px;
+        }
+        /* espacio para el contenido */
+        .main {
+            margin-top: 80px;
+        }
+
+        .welcome-message {
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .INTRO {
+            text-align: justify;
+            margin: 10px;
+        }
+
+        .chart-container {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgb(84, 83, 83);
+            margin-bottom: 100px;
+            height: 300px;
+         
+        }
+
+        .chart-container2 {
+            background-color: #f8f9fa;
+            width: 100%;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgb(84, 83, 83);
+            height: 300px;   
+            align-items: center; /* Centra verticalmente */  
+            justify-content: center; /* Centra horizontalmente */ 
+            
+        }        
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+
+        }
+
+        .footer {
+            text-align: center;
+            margin: 170px;
+        }
+        .boton2 {
+           
+            text-align: center;
+            margin: 45px;
+        }
+
+        .canvas-container {
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    height: 100%; /* Asegúrate de que ocupe toda la altura del contenedor */
+        
+        }
+
+        .VALORACTUAL1{
+    
+            margin: 5px;
+
+        }
+   
+
+canvas {
+    display: block;
+}
+
+    </style>
+</head>
+<body>
+    <!-- ======= Header ======= -->
+    <header id="header" class="header fixed-top d-flex align-items-center justify-content-left">
+        <h1 class="header-title">SMAC WEB</h1>
+    </header>
+
+    <div class="main container">
+        <!-- Mensaje de bienvenida -->
+        <div class="welcome-message">
+            <h2>Recopilación de Datos</h2>
+        </div>
+        <!-- introducción -->
+        <div class="INTRO">
+            <p>A través del sistema OBD2, recopilaremos distintos valores del vehículo, como la posición del acelerador, la posición del freno, 
+                las revoluciones por minuto (RPM) y el estado del sensor de transmisión. Estos datos se mostrarán en las gráficas a continuación, permitiendo comparar los 
+                valores obtenidos con los valores ideales. De esta manera, proporcionaremos retroalimentación sobre los hábitos de conducción del usuario, identificando si alguno 
+                de estos puede ser perjudicial para el rendimiento y la vida útil del vehículo.</p>
+        </div>
+
+        <!-- Botón de Colapso inicio o detener la recopilacion de datos-->
+        <div class="text-center">
+            <button id="toggleDataButton" class="btn btn-primary mt-3" type="button">
+                Iniciar/Detener recopilación de datos
+            </button>
+        </div>
+                <!-- Botón para actualizar datos -->
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary" onclick="actualizarPagina()">Actualizar Datos</button>
+                </div>
+
+        <!-- Sección de Gráficas (Colapsable) con formato 2x2 -->
+<!-- Sección de Gráficas (Colapsable) con formato 2x2 y una gráfica adicional abajo centrada -->
+<div class="collapse mt-4" id="chartsSection">
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="chart-container">
+                <canvas id="sensor1Chart"></canvas>
+                <div class="boton2">
+                    <button class="btn btn-success" onclick="window.location.href='sensor1.html'">Ampliar datos</button>
+                </div>     
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="chart-container">
+                <canvas id="sensor2Chart"></canvas>
+                <div class="boton2">
+                    <button class="btn btn-success" onclick="window.location.href='sensor2.html'">Ampliar datos</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="chart-container">
+                <canvas id="sensor3Chart"></canvas>
+                <div class="boton2">
+                    <button class="btn btn-success" onclick="window.location.href='sensor3.html'">Ampliar datos</button>
+                </div>
+                <div class="text-left mt-4">
+                    <h3>Valor Actual: <span id="sensor3Value">0 %</span></h3> <!-- Aquí se mostrará el valor -->   
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="chart-container">
+                <canvas id="sensor4Chart"></canvas>
+                <div class="boton2">
+                    <button class="btn btn-success" onclick="window.location.href='sensor4.html'">Ampliar datos</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Gráfica adicional centrada abajo -->
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="chart-container2">
+                <canvas id="sensor5Chart"></canvas>
+                <div class="boton2">
+                    <button class="btn btn-success" onclick="window.location.href='sensor5.html'">Ampliar datos</button>
+                </div>
+                <div class="text-center mt-4">
+                    <h3>Valor Actual: <span id="sensor5Value">0 %</span></h3> <!-- Aquí se mostrará el valor -->   
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Mensaje emergente TOAST -->
+    <div class="toast-container">
+        <div id="toastMessage" class="toast align-items-center text-white bg-primary" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">Recopilación de datos iniciada.</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación para detener la recopilacion de datos  -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirmación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro de detener la recopilación de datos?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button id="confirmStopButton" type="button" class="btn btn-danger">Detener</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Enlaces a los scripts necesarios para Bootstrap y Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+
+        const toast = new bootstrap.Toast(document.getElementById('toastMessage'));
+        const toggleButton = document.getElementById('toggleDataButton');
+        const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        const confirmStopButton = document.getElementById('confirmStopButton');
+        let isCollecting = false;
+
+        toggleButton.addEventListener('click', () => {
+            if (isCollecting) {
+                confirmModal.show(); // Mostrar modal si se quiere detener
+            } else {
+                startDataCollection(); // Iniciar recolección directamente
+            }
+        });
+
+        confirmStopButton.addEventListener('click', () => {
+            stopDataCollection(); // Detener recolección si se confirma en el modal
+            confirmModal.hide();
+        });
+
+        function startDataCollection() {
+            isCollecting = true;
+            document.querySelector('.toast-body').textContent = 'Recopilación de datos iniciada.';
+            toast.show();
+            document.getElementById('chartsSection').classList.add('show');
+            localStorage.setItem('dataCollectionActive', 'true');
+        }
+
+        function stopDataCollection() {
+            isCollecting = false;
+            document.querySelector('.toast-body').textContent = 'Recopilación de datos detenida.';
+            toast.show();
+            chartsSection.classList.remove('show'); // Ocultar gráficas
+        }
+        
+        // Inicializa las grafias, antes de que websocket las actualice
+
+
+  
+// Primera gráfica: RPMs
+const ctx = document.getElementById('sensor1Chart').getContext('2d');
+    const sensor1Chart = new Chart(ctx, {
+        type: 'line',
+            data: {
+                labels: [],  // Etiquetas de tiempo
+                datasets: [{
+                    label: 'Revoluciones por minuto.',
+                    data: [],  // Datos en tiempo real
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderWidth: 1
+                } ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+  // Inicializar la  segunda gráfica vacía
+  const ctx2 = document.getElementById('sensor2Chart').getContext('2d');
+        const sensor2Chart = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: [],  // Etiquetas de tiempo
+                datasets: [{
+                    label: 'Velocidad del Vehículo',
+                    data: [],  // Datos en tiempo real
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+ // Posicion del acelerador 
+const ctx3 = document.getElementById('sensor3Chart').getContext('2d');
+const sensor3Chart = new Chart(ctx3, {
+    type: 'doughnut', // Mismo tipo que la gráfica 1
+    data: {
+        labels: ['Valor Actual', 'Resto'], // Mismas etiquetas
+        datasets: [{
+            label: 'Tacómetro',
+            data: [0, 100], // Mismo conjunto de datos inicial
+            backgroundColor: ['rgba(255, 0, 0, 1)', 'rgba(0, 0, 0, 0.2)'], // Colores iguales
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        rotation: -90,
+        circumference: 180,
+        plugins: {
+            tooltip: { enabled: false },
+            legend: { display: false }
+        }
+    }
+});
+  // Inicializar la tercer gráfica vacía
+  const ctx4= document.getElementById('sensor4Chart').getContext('2d');
+        const sensor4Chart = new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: [],  // Etiquetas de tiempo
+                datasets: [{
+                    label: 'Sensor de Transmición',
+                    data: [],  // Datos en tiempo real
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    // Deposito de gas 
+        const ctx5 = document.getElementById('sensor5Chart').getContext('2d');
+const sensor5Chart = new Chart(ctx5, {
+    type: 'doughnut', // Mismo tipo que la gráfica 1
+    data: {
+        labels: ['Valor Actual', 'Resto'], // Mismas etiquetas
+        datasets: [{
+            label: 'Deposito de gasolina',
+            data: [0, 100], // Mismo conjunto de datos inicial
+            backgroundColor: ['rgba(255, 0, 0, 1)', 'rgba(0, 0, 0, 0.2)'], // Colores iguales
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        rotation: -90,
+        circumference: 180,
+        plugins: {
+            tooltip: { enabled: false },
+            legend: { display: false }
+        }
+    }
+});
+       
+   
+        document.addEventListener('DOMContentLoaded', () => {
+         const isDataCollectionActive = localStorage.getItem('dataCollectionActive') === 'true';
+
+         if (isDataCollectionActive) {
+        document.getElementById('chartsSection').classList.add('show');
+        isCollecting = true;
+         }
+        });
+
+
+         // Conexión WebSocket para recibir datos en tiempo real
+         const socket = new WebSocket("ws://10.87.7.2:81/");
+
+socket.onopen = () => {
+    console.log("Conectado al WebSocket");
+};
+// Actualiza las gráficas cuando lleguen datos del WebSocket
+socket.onmessage = function (event) {
+    try {
+        const data = JSON.parse(event.data);
+        const currentTime = new Date().toLocaleTimeString(); // Mueve esta declaración al principio
+
+
+        // Actualiza la primera gráfica (Sensor 1)
+        sensor1Chart.data.labels.push(currentTime);
+        sensor1Chart.data.datasets[0].data.push(data.sensor1);
+        if (sensor1Chart.data.labels.length > 20) {
+            sensor1Chart.data.labels.shift();
+            sensor1Chart.data.datasets[0].data.shift();
+        }
+        sensor1Chart.update();
+
+
+        // Actualiza la segunda gráfica (Sensor 2)
+       
+        sensor2Chart.data.labels.push(currentTime);
+        sensor2Chart.data.datasets[0].data.push(data.sensor2);
+        if (sensor2Chart.data.labels.length > 20) { // Limita a 20 puntos
+            sensor2Chart.data.labels.shift();
+            sensor2Chart.data.datasets[0].data.shift();
+        }
+        sensor2Chart.update();
+
+        // Actualiza la tercera gráfica (Sensor 3)
+        sensor3Chart.data.datasets[0].data = [data.sensor3, 100 - data.sensor3];
+        sensor3Chart.update();
+        document.getElementById('sensor3Value').textContent = `${data.sensor3} %`; // Porcentaje para doughnut
+
+        // Actualiza la cuarta gráfica (Sensor 4)
+        sensor4Chart.data.labels.push(currentTime);
+        sensor4Chart.data.datasets[0].data.push(data.sensor4);
+        if (sensor4Chart.data.labels.length > 20) {
+            sensor4Chart.data.labels.shift();
+            sensor4Chart.data.datasets[0].data.shift();
+        }
+        sensor4Chart.update();
+
+        // Actualiza la quinta gráfica (Sensor 5)
+        sensor5Chart.data.datasets[0].data = [data.sensor5, 100 - data.sensor5];
+        sensor5Chart.update();
+        document.getElementById('sensor5Value').textContent = `${data.sensor5} %`; // Porcentaje para doughnut
+    } catch (error) {
+        console.error("Error procesando los datos del WebSocket:", error);
+    }
+};
+
+// Manejo de errores
+socket.onerror = function (error) {
+    console.error("Error en la conexión WebSocket:", error);
+};
+        // Función para actualizar la página
+        function actualizarPagina() {
+            // Guardar estado para mostrar el toast después de la recarga
+            sessionStorage.setItem('showToast', 'true');
+
+            // Mostrar el toast antes de recargar la página
+            const toastEl = document.getElementById('toastMessage');
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+
+            // Esperar un poco antes de recargar la página
+            setTimeout(() => {
+                location.reload();  // Recargar la página después de mostrar el toast
+            }, 1000);  // Retraso de 1 segundo antes de recargar
+        }
+    </script>
+
+    <footer class="footer">
+    <a href="home.html" class="btn btn-danger">Regresar al menu principal</a>
+    </footer>
+
+
+   
+</body>
+</html>
