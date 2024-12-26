@@ -1,0 +1,144 @@
+<!-- Cambiar los datos a los correspondientes de cada sensor -->
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gráfica Ampliada - Potenciómetro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            margin-top: 50px;
+        }
+        .chart-container {
+            padding: 30px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center">Gráfica Ampliada - Velocidad del vehículo</h2>
+        <div class="chart-container">
+            <canvas id="sensorChart"></canvas>
+        </div>
+        <!-- Botón para actualizar datos -->
+        <div class="text-center mt-4">
+            <button class="btn btn-primary" onclick="actualizarPagina()">Actualizar Datos</button>
+        </div>
+
+        <!-- Toast para mostrar mensaje -->
+        <div class="toast-container position-fixed top-0 end-0 p-3">
+            <div id="toastMessage" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">Notificación</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    Estableciendo conexión, espere por favor.
+                </div>
+            </div>
+        </div>
+    </div>        
+        <div class="text-center mt-4">
+            <a href="preuba2.html" class="btn btn-danger">Regresar a la Página Principal</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+
+       // Verificar si se debe mostrar el toast después de la recarga
+       window.onload = () => {
+            const shouldShowToast = sessionStorage.getItem('showToast');
+            if (shouldShowToast) {
+                const toastEl = document.getElementById('toastMessage');
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show(); // Mostrar el toast
+                sessionStorage.removeItem('showToast'); // Limpiar la bandera después de mostrar el toast
+            }
+        };
+
+        // Inicializar la gráfica vacía
+        const ctx = document.getElementById('sensorChart').getContext('2d');
+        const sensorChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],  // Etiquetas de tiempo
+                datasets: [{
+                    label: 'Velocidad del vehículo',
+                    data: [],  // Datos en tiempo real
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Conexión WebSocket para recibir datos en tiempo real
+        const socket = new WebSocket("ws://10.87.7.2:81/");
+
+        socket.onopen = () => {
+            console.log("Conectado al WebSocket");
+        };
+
+        socket.onmessage = (event) => {
+               const data = JSON.parse(event.data);
+                 const sensor2Value = data.sensor2; // Leer el valor usando la clave "potenciometro"
+
+             if (sensor2Value!== undefined) {
+                  // Agregar el nuevo valor a la gráfica con etiqueta de tiempo
+                  sensorChart.data.labels.push(new Date().toLocaleTimeString());
+                 sensorChart.data.datasets[0].data.push(sensor2Value);
+
+                 // Mantener solo las últimas 20 lecturas
+             if (sensorChart.data.labels.length > 20) {
+                 sensorChart.data.labels.shift();
+                  sensorChart.data.datasets[0].data.shift();
+              }
+
+                // Actualizar la gráfica
+          sensorChart.update();
+          } else {
+        console.warn("Valor no encontrado en los datos");
+    }
+};
+
+
+        socket.onclose = () => {
+            console.log("Conexión WebSocket cerrada");
+        };
+
+        // Función para actualizar la página
+        function actualizarPagina() {
+            // Guardar estado para mostrar el toast después de la recarga
+            sessionStorage.setItem('showToast', 'true');
+
+            // Mostrar el toast antes de recargar la página
+            const toastEl = document.getElementById('toastMessage');
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+
+            // Esperar un poco antes de recargar la página
+            setTimeout(() => {
+                location.reload();  // Recargar la página después de mostrar el toast
+            }, 1000);  // Retraso de 1 segundo antes de recargar
+        }
+
+    </script>
+</body>
+</html>
